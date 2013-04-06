@@ -26,7 +26,7 @@ my $strp = DateTime::Format::Strptime->new(
 my $now = time();
 
 my $uid = 1618051664; # breakingnews
-my $access_token = '2.00OfsMMCIXGqBB50b811f921jG1VJB';
+my $access_token = '';
 my $count = 100;
 
 my $url = url('https://api.weibo.com/2/statuses/user_timeline.json');
