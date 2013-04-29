@@ -12,8 +12,8 @@ binmode(STDOUT, ":utf8");
 sub err_msg($)
 {
   my ($res) = @_;
-  print "----request----\n", $res->request()->as_string, "\n";
-  print "----response----\n", $res->as_string, "\n";
+  print STDERR "----request----\n", $res->request()->as_string, "\n";
+  print STDERR "----response----\n", $res->as_string, "\n";
   warn "Failed to fetch " . $res->request()->uri . ": " . $res->status_line;
 }
 
