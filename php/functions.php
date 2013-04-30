@@ -28,12 +28,16 @@ function get_info_files()
 {
   foreach (glob(INFO_DIR . "/*") as $filename)
   {
-    if (!$first || $filename > $first)
+    if (empty($first))
+    {
+      $first = $filename;
+    }
+    else if ($filename > $first)
     {
       $second = $first;
       $first = $filename;
     }
-    else if (!$second || $filename > $second)
+    else if (empty($second) || $filename > $second)
     {
       $second = $filename;
     }
@@ -125,7 +129,14 @@ function _get_text($id)
   else
   {
     $post = json_decode($response, true);
-    return $post['text'];
+    if (!empty($post) && isset($post['text']))
+    {
+      return $post['text'];
+    }
+    else
+    {
+      return "EMPTY RESPONSE";
+    }
   }  
 }
 

@@ -16,6 +16,7 @@ h1 {
   font-size: 24px;
   text-align: center;
   border-bottom: 1px grey dotted;
+  padding-bottom: 0.5em;
 }
 .txt {
   font-family: "Consolas", "Simsun", sans-serif;
@@ -53,22 +54,12 @@ require_once('functions.php');
 
 
 list($avg_score, $avg_delta) = get_summary();
-
-
 list($first, $second) = get_info_files();
-
 
 $posts = get_posts($first, $second);
 $posts = update_final_score($posts, $avg_score, $avg_delta);
 
-{
-  $score = array();
-  foreach ($posts as $id => $data)
-  {
-    $score[$id] = $data[3];
-  }
-  array_multisort($score, SORT_DESC, $posts);
-}
+uasort($posts, function($a, $b) { return $b[3] - $a[3]; });
 
 $i = 0;
 foreach ($posts as $id => $data)
@@ -84,7 +75,11 @@ foreach ($posts as $id => $data)
           <div class="score"><?php echo $score?></div>
         </div>
         <div class="txt">
-          <?php echo get_text($id)?>
+          <?php 
+            $txt = get_text($id);
+            $txt = preg_replace('/(http:\/\/t\.cn\/[0-9A-Za-z]*)/', '<a href="$1">$1</a>', $txt);
+            echo $txt;
+          ?>
         </div>
         <div class="debug">
         AGE:<?php echo $age?>
