@@ -2,9 +2,10 @@
 
 use strict;
 use warnings;
+use List::Util qw/sum/;
 
-my %age_to_score = ();
-#my %date_to_id = ();
+# Values are hashes keyed by "age"
+my %posts = ();
 
 sub calc_score($$)
 {
@@ -17,19 +18,7 @@ sub process($)
   my ($line) = @_;
   my ($id,$reposts_count,$comments_count,$datetime,$epoch,$age) = split /,/, $line;
 
-  # Calculate average score
-  push @{ $age_to_score{$age} }, calc_score($reposts_count, $comments_count);
-
-#  # Calculate post count per day
-#  my $date = substr $datetime, 0, 10;
-#  push @{ $date_to_id{$date} }, $id;
-}
-
-sub sum(@)
-{
-  my $sum = 0;
-  $sum += $_ for @_;
-  return $sum;
+  $posts{$id}->{$age} = calc_score($reposts_count, $comments_count);
 }
 
 sub avg(@)
@@ -46,26 +35,64 @@ sub avg(@)
   }
 }
 
-#sub uniq_count(@)
-#{
-#  my %uniq = ();
-#  $uniq{$_} = 1 for @_;
-#  return (scalar keys %uniq);
-#}
+sub calc_avgs($)
+{
+  my ($href) = @_;
+  my @keys = sort {$a <=> $b} (keys %$href);
+  my @avgs = map { avg(@{ $href->{$_} }) } @keys;
+
+  return \@avgs;
+}
+
+sub print_score()
+{
+  my %age_to_score = ();
+  for (values %posts)
+  {
+    while (my($age,$score) = each %$_)
+    {
+      push @{ $age_to_score{$age} }, $score;
+    }
+  }
+
+  my @avgs = @{ calc_avgs(\%age_to_score) };
+  print 'AVG SCORE = ', join(',', @avgs), "\n";
+}
+
+sub print_delta()
+{
+  my %age_to_delta = (0, [0]);
+  for (values %posts)
+  {
+    for my $age (keys %$_)
+    {
+      if ($age > 0 && exists $_->{($age - 1)} )
+      {
+        my $prev = $_->{($age - 1)};
+        my $curr = $_->{$age};
+        my $delta = $curr - $prev;
+        if ($delta < 0)
+        {
+          $delta = 0;
+        }
+        push @{ $age_to_delta{$age} }, $delta;
+      }
+    }
+  }
+  my @avgs = @{ calc_avgs(\%age_to_delta) };
+  print 'AVG DELTA = ', join(',', @avgs), "\n";
+}
 
 sub print_summary()
 {
-  my @keys = sort {$a <=> $b} (keys %age_to_score);
-  my @avgs = map { avg(@{ $age_to_score{$_} }) } @keys;
-  print join(',', @avgs), "\n";
-
-#  print "POSTS PER DAY: ", avg(map { uniq_count(@{ $_ }) } values %date_to_id), "\n";
+  print_score();
+  print_delta();
 }
 
 sub main(@)
 {
   my ($dirname) = @_;
-  if (-d $dirname)
+  if ($dirname && -d $dirname)
   {
     local @ARGV = glob "$dirname/*";
     while (<>)
