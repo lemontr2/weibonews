@@ -1,10 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>Weibo News / 新闻聚光灯</title>
-<link rel="stylesheet" href="bootstrap/css/bootstrap.css">
 <style type="text/css">
+.main {
+  width: 460px;
+  margin-right: auto;
+  margin-left: auto;
+  line-height: 20px;
+}
+a {
+  color: #0088cc;
+  text-decoration: none;
+}
 .post {
   border-bottom: 1px grey dotted;
   margin-bottom: 1em;
@@ -21,11 +30,11 @@ h1 {
 .txt {
   font-family: "Consolas", "Simsun", sans-serif;
   font-size: 12px;
+  margin-left: 60px;
 }
 .info {
   float: left;
   width: 60px;
-  height: 100%;
   text-align: center;
   font-family: "Consolas", sans-serif;
   font-size: 12px;
@@ -35,18 +44,13 @@ h1 {
   font-family: "Consolas", sans-serif;
   font-size: 9px;
   color: silver;
+  margin-left: 60px;
 }
 </style>
 </head>
 <body>
-  <div class="container">
-    <div class="row">
-      <div class="span3">&nbsp;</div>
-      <div class="span6">
-        <h1>Weibo News / 新闻聚光灯</h1>
-      </div>
-      <div class="span3">&nbsp;</div>
-    </div>
+  <div class="main">
+    <h1>Weibo News / 新闻聚光灯</h1>
 <?php
 
 require_once('config.php');
@@ -66,9 +70,6 @@ foreach ($posts as $id => $data)
 {
   list($age,$total_score,$total_delta,$score,$delta) = $data;
   ?>
-  <div class="row">
-    <div class="span3">&nbsp;</div>
-    <div class="span6">
       <div class="post">
         <div class="info">
           <div class="delta"><?php echo $delta > 0 ? '<img src="images/arrow-alt-up.png"></img>' : '<img src="images/arrow-alt-down.png"></img>'?></div>
@@ -89,9 +90,6 @@ foreach ($posts as $id => $data)
         D:<?php echo $delta?>
         </div>
       </div>
-    </div>
-    <div class="span3">&nbsp;</div>
-  </div>
 <?php   
   ++$i;
   if ($i >= POST_COUNT)
