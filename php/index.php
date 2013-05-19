@@ -16,16 +16,17 @@ a {
 }
 .post {
   border-bottom: 1px grey dotted;
-  margin-bottom: 1em;
+  margin-bottom: .5em;
+  padding-bottom: .5em;
   overflow: hidden;
-  height: 120px;
 }
 h1 {
   font-family: Arial, "Microsoft YaHei", sans-serif;
   font-size: 24px;
   text-align: center;
   border-bottom: 1px grey dotted;
-  padding-bottom: 0.5em;
+  padding-bottom: 1em;
+  margin-bottom: .5em;
 }
 .txt {
   font-family: "Consolas", "Simsun", sans-serif;
@@ -39,6 +40,7 @@ h1 {
   font-family: "Consolas", sans-serif;
   font-size: 12px;
   padding-top: 20px;
+  height: 80px;
 }
 .debug {
   font-family: "Consolas", sans-serif;
@@ -72,7 +74,16 @@ foreach ($posts as $id => $data)
   ?>
       <div class="post">
         <div class="info">
-          <div class="delta"><?php echo $delta > 0 ? '<img src="images/arrow-alt-up.png"></img>' : '<img src="images/arrow-alt-down.png"></img>'?></div>
+          <div class="delta"><?php
+          if ($age == 0 || $delta > 0)
+          {
+            echo '<img src="images/arrow-alt-up.png"></img>';
+          }
+          else
+          {          
+            echo '<img src="images/arrow-alt-down.png"></img>';
+          }
+          ?></div>
           <div class="score"><?php echo $score?></div>
         </div>
         <div class="txt">
