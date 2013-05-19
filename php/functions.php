@@ -28,18 +28,21 @@ function get_info_files()
 {
   foreach (glob(INFO_DIR . "/*") as $filename)
   {
-    if (empty($first))
+    if (filesize($filename) > 0) // skip empty files
     {
-      $first = $filename;
-    }
-    else if ($filename > $first)
-    {
-      $second = $first;
-      $first = $filename;
-    }
-    else if (empty($second) || $filename > $second)
-    {
-      $second = $filename;
+      if (empty($first))
+      {
+        $first = $filename;
+      }
+      else if ($filename > $first)
+      {
+        $second = $first;
+        $first = $filename;
+      }
+      else if (empty($second) || $filename > $second)
+      {
+        $second = $filename;
+      }
     }
   }
 
@@ -60,9 +63,12 @@ function _get_posts($info_file)
   while ($line = fgets($hd))
   {
     $line = trim($line);
-    list($id,$reposts_count,$comments_count,$datetime,$epoch,$age)
-      = split(',', $line);
-    $posts[$id] = array($age, calc_score($reposts_count, $comments_count));
+    if (!empty($line) && preg_match('/\d+,\d+,\d+,\d\d\d\d-\d\d-\d\d.\d\d:\d\d:\d\d,\d+,\d+/', $line))
+    {
+      list($id,$reposts_count,$comments_count,$datetime,$epoch,$age)
+        = split(',', $line);
+      $posts[$id] = array($age, calc_score($reposts_count, $comments_count));
+    }    
   }
   fclose($hd);
   
