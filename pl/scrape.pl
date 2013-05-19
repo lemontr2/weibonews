@@ -6,6 +6,8 @@ use LWP::UserAgent;
 use URI::URL;
 use JSON;
 use DateTime::Format::Strptime;
+use Getopt::Long;
+use constant { RETRY => 5 };
 
 binmode(STDOUT, ":utf8");
 
@@ -17,9 +19,9 @@ sub err_msg($)
   warn "Failed to fetch " . $res->request()->uri . ": " . $res->status_line;
 }
 
-sub scrape($)
+sub scrape($$$)
 {
-  my ($access_token) = @_;
+  my ($token,$uid,$count) = @_;
   my $ua = LWP::UserAgent->new();
   
   my $strp = DateTime::Format::Strptime->new(
@@ -28,13 +30,10 @@ sub scrape($)
   );
   my $now = time();
   
-  my $uid = 1618051664; # breakingnews
-  my $count = 100;
-  
   my $url = url('https://api.weibo.com/2/statuses/user_timeline.json');
   
   $url->query_form(
-    access_token    => $access_token,
+    token    => $token,
     uid       => $uid,
     count     => $count,
     page      => 1,
@@ -42,39 +41,53 @@ sub scrape($)
     feature   => 1,
   );
   
-  my $response = $ua->get($url);
-  if ($response->is_success())
+  LOOP: for (1 .. RETRY)
   {
-    my $json = $response->decoded_content();
-    my $posts = decode_json( $json );
-    for (@{ $posts->{statuses} })
+    my $response = $ua->get($url);
+    if ($response->is_success())
     {
-      # Parse datetime
-      my $created_at = $_->{created_at};
-      my $datetime = $strp->parse_datetime($created_at);
-      my $epoch = $datetime->epoch;
-      my $age = int( ( $now - $epoch ) / 3600 );
-  
-      print join(',', @{$_}{qw/id reposts_count comments_count/}, $datetime, $epoch, $age), "\n";
+      my $json = $response->decoded_content();
+      my $posts = decode_json( $json );
+      for (@{ $posts->{statuses} })
+      {
+        # Parse datetime
+        my $created_at = $_->{created_at};
+        my $datetime = $strp->parse_datetime($created_at);
+        my $epoch = $datetime->epoch;
+        my $age = int( ( $now - $epoch ) / 3600 );
+    
+        print join(',', @{$_}{qw/id reposts_count comments_count/}, $datetime, $epoch, $age), "\n";
+      }
+      last LOOP;
     }
-  }
-  else
-  {
-    err_msg($response);
+    else
+    {
+      err_msg($response);
+      sleep 5;
+    }
   }
 }
 
 sub main
 {
-  my ($access_token) = @_;
-  if ($access_token)
+  #my $uid = 1618051664; # breakingnews
+  #my $count = 50;
+
+  my ($token, $uid, $count) = ('','',0);
+  GetOptions(
+        "token=s" => \$token,
+        "uid=s"   => \$uid,
+        "count=i" => \$count);
+
+  if ($token && $uid && $count)
   {
-    scrape($access_token);
+    scrape($token, $uid, $count);
   }
   else
   {
-    print "Usage: $0 access_token\n";
-    exit 0;
+    print "$0: Argument required.\n";
+    exit 1;
   }
+                
 }
 main(@ARGV);

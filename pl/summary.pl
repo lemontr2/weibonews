@@ -2,10 +2,28 @@
 
 use strict;
 use warnings;
-use List::Util qw/sum/;
+use constant { MAX_AGE => 80 };
+
+require 'functions.pl';
 
 # Values are hashes keyed by "age"
 my %posts = ();
+
+sub process($)
+{
+  my ($line) = @_;
+  # 3578790913366671,42,60,2013-05-17T03:48:27,1368733707,0
+  if ($line && $line =~ /(\d+),(\d+),(\d+),(\d\d\d\d-\d\d-\d\d.\d\d:\d\d:\d\d),(\d+),(\d+)/)
+  {
+    my ($id,$reposts_count,$comments_count,$datetime,$epoch,$age) = ($1,$2,$3,$4,$5,$6);
+    $posts{$id}->{$age} = calc_score($reposts_count, $comments_count);
+  }
+  else
+  {
+    # skipped
+    #warn "Invalid input: $line";
+  }
+}
 
 sub calc_score($$)
 {
@@ -13,80 +31,18 @@ sub calc_score($$)
   return $reposts_count + $comments_count * 2;
 }
 
-sub process($)
+sub _p($$)
 {
-  my ($line) = @_;
-  my ($id,$reposts_count,$comments_count,$datetime,$epoch,$age) = split /,/, $line;
+  my ($func, $msg) = @_;
+  my $data = $func->(\%posts, MAX_AGE);
 
-  $posts{$id}->{$age} = calc_score($reposts_count, $comments_count);
-}
-
-sub avg(@)
-{
-  if (@_)
-  {
-    my $n = @_;
-    my $sum = sum(@_);
-    return int($sum / $n);
-  }
-  else
-  {
-    return 0;
-  }
-}
-
-sub calc_avgs($)
-{
-  my ($href) = @_;
-  my @keys = sort {$a <=> $b} (keys %$href);
-  my @avgs = map { avg(@{ $href->{$_} }) } @keys;
-
-  return \@avgs;
-}
-
-sub print_score()
-{
-  my %age_to_score = ();
-  for (values %posts)
-  {
-    while (my($age,$score) = each %$_)
-    {
-      push @{ $age_to_score{$age} }, $score;
-    }
-  }
-
-  my @avgs = @{ calc_avgs(\%age_to_score) };
-  print 'AVG SCORE = ', join(',', @avgs), "\n";
-}
-
-sub print_delta()
-{
-  my %age_to_delta = (0, [0]);
-  for (values %posts)
-  {
-    for my $age (keys %$_)
-    {
-      if ($age > 0 && exists $_->{($age - 1)} )
-      {
-        my $prev = $_->{($age - 1)};
-        my $curr = $_->{$age};
-        my $delta = $curr - $prev;
-        if ($delta < 0)
-        {
-          $delta = 0;
-        }
-        push @{ $age_to_delta{$age} }, $delta;
-      }
-    }
-  }
-  my @avgs = @{ calc_avgs(\%age_to_delta) };
-  print 'AVG DELTA = ', join(',', @avgs), "\n";
+  print $msg, ' = ', join(',', calc_avgs($data, MAX_AGE)), "\n";
 }
 
 sub print_summary()
 {
-  print_score();
-  print_delta();
+  _p(\&collect_scores, 'AVG SCORE');
+  _p(\&collect_deltas, 'AVG DELTA');
 }
 
 sub main(@)
