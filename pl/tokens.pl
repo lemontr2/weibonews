@@ -10,8 +10,8 @@ BEGIN { require 'config.pl'; }
 sub err_msg($)
 {
   my ($mech) = @_;
-  print "----request----\n", $mech->res()->request->as_string, "\n";
-  print "----response----\n", $mech->res()->as_string, "\n";
+  print STDERR "----request----\n", $mech->res()->request->as_string, "\n";
+  print STDERR "----response----\n", $mech->res()->as_string, "\n";
   warn "Failed to fetch " . $mech->uri() . ": " . $mech->status();
 }
 

@@ -33,7 +33,7 @@ sub scrape($$$)
   my $url = url('https://api.weibo.com/2/statuses/user_timeline.json');
   
   $url->query_form(
-    token    => $token,
+    access_token => $token,
     uid       => $uid,
     count     => $count,
     page      => 1,
