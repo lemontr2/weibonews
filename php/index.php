@@ -87,15 +87,18 @@ function adjust_score($age, $score)
 
 function parse_datetime($str)
 {
-  $parts = date_parse_from_format('D M j H:i:s O Y', $str);
-  if ($parts['warning_count'] > 0 || $parts['error_count'] > 0)
+  $parts = date_parse($str);
+  if ($parts)
   {
-    die("Failed to parse datetime, str=$str");
-  }
-  list($h,$m,$s,$month,$d,$y) = array(
+   list($h,$m,$s,$month,$d,$y) = array(
                   $parts['hour'], $parts['minute'], $parts['second'],
                   $parts['month'], $parts['day'], $parts['year']);
-  return mktime($h,$m,$s,$month,$d,$y);
+   return mktime($h,$m,$s,$month,$d,$y);
+  }
+  else
+  {
+    die("Failed to parse datetime, str=\"$str\"");
+  }
 }
 
 function get_posts()
@@ -142,11 +145,13 @@ function get_posts()
   }
 }
 
+function _sort_by_score($a, $b) {
+  return $b[2] - $a[2];
+}
 
 $posts = get_posts();
-uasort($posts, function($a, $b) {
-  return $b[2] - $a[2]; // sort by $s
-});
+uasort($posts, '_sort_by_score');
+
 $i = 0;
 foreach ($posts as $post)
 {
