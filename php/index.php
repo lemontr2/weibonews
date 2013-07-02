@@ -56,7 +56,8 @@ date_default_timezone_set('Asia/Shanghai');
 require_once('token.php');
 define('UID', '1618051664'); // breakingnews
 define('LIMIT', 20); // How many posts to show
-define('POST_COUNT', 50); // How many posts to fetch
+define('POST_COUNT', 100); // How many posts to fetch
+define('POST_COUNT_2', 50); // How many posts we need from UID
 
 function calc_score($reposts_count, $comments_count)
 {
@@ -105,11 +106,10 @@ function get_posts()
 {
   $ch = curl_init();
   
-  curl_setopt($ch,CURLOPT_URL, "https://api.weibo.com/2/statuses/user_timeline.json"
+  curl_setopt($ch,CURLOPT_URL, "https://api.weibo.com/2/statuses/friends_timeline.json"
                   . "?access_token=" . ACCESS_TOKEN
-                  . "&uid=" . UID
                   . "&count=" . POST_COUNT
-                  . "&page=1&trim_user=1&feature=1");
+                  . "&feature=1");
   curl_setopt($ch,CURLOPT_SSL_VERIFYPEER, FALSE);
   curl_setopt($ch,CURLOPT_RETURNTRANSFER, TRUE);
   $response = curl_exec($ch);
@@ -125,18 +125,35 @@ function get_posts()
   {
     $now = time();
     $posts = json_decode($response, true);
-    if (!empty($posts) && isset($posts['statuses']))
+    if (!empty($posts))
     {
-      $ret = array();
-      foreach ($posts['statuses'] as $post)
+      if (isset($posts['statuses']))
       {
-        $age = intval(($now - parse_datetime($post['created_at'])) / 3600);
-        $ts = calc_score($post['reposts_count'], $post['comments_count']);
-        $s = adjust_score($age, $ts);
-        $txt = $post['text'];
-        array_push($ret, array($age, $ts, $s, $txt));
+        $ret = array();
+        $i = 0;
+        foreach ($posts['statuses'] as $post)
+        {
+          if ($post['user']['id'] == UID)
+          {
+            $age = intval(($now - parse_datetime($post['created_at'])) / 3600);
+            $ts = calc_score($post['reposts_count'], $post['comments_count']);
+            $s = adjust_score($age, $ts);
+            $txt = $post['text'];
+            array_push($ret, array($age, $ts, $s, $txt));
+            ++$i;
+          }
+          if ($i >= POST_COUNT_2)
+          {
+            break;
+          }
+        }
+        return $ret;
       }
-      return $ret;
+      if (isset($posts['error']))
+      {
+        error_log("Failed to fetch posts: " . $posts['error']);
+        return array();
+      }
     }
     else
     {
